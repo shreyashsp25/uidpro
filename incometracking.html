@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Tracker</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 20px;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background: black;
+            text-align: center;
+        }
+        h2 {
+            color: white;
+            font-weight: bold;
+        }
+        .container {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('/Users/yash/Downloads/logo.jpg') no-repeat center center/cover;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgb(245, 2, 2);
+        }
+        input, button, select {
+            display: block;
+            width: 90%;
+            margin: 10px auto;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background: rgb(245, 2, 2);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: rgb(179, 8, 8);
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            color: black;
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background: rgb(2, 22, 243);
+            color: white;
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #ff4d4d, #cc0000);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .delete-btn:hover {
+            background: linear-gradient(135deg, #cc0000, #990000);
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(51, 51, 51, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .navbar a {
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        .logout-btn {
+            padding: 12px 20px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .logout-btn:hover {
+            background: darkred;
+        }
+        .logo { height: 40px; margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="/Users/yash/Downloads/logo.jpg" alt="Budget Manager Logo" class="logo">
+        <a href="index.html">Home</a>
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="incometracking.html" class="active">Income Tracker</a>
+        <a href="expensetracking.html">Expense Tracker</a>
+        <a href="budgetplanning.html">Budget Planner</a>
+        <a href="report.html">Reports</a>
+        <a class="logout-btn" onclick="logout()">Logout</a>
+    </div>
+
+    <br><br><br><br>
+
+    <div class="container">
+        <h2>Income Tracker</h2>
+        <button onclick="window.location.href='dashboard.html'">Go to Dashboard</button>
+        <input type="text" id="source" placeholder="Income Source">
+        <input type="number" id="amount" placeholder="Amount">
+        <select id="category">
+            <option value="Salary">Salary</option>
+            <option value="Investments">Investments</option>
+            <option value="Freelance">Freelance</option>
+            <option value="Other">Other</option>
+        </select>
+        <button onclick="addIncome()">Add Income</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="incomeTable"></tbody>
+        </table>
+        <h3>Total Income: ₹<span id="totalIncome">0</span></h3>
+    </div>
+
+    <button onclick="clearAllData()">Clear All Data</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", loadIncomeData);
+
+        // Detect data cleared from any other page
+        window.addEventListener("storage", function (event) {
+            if (event.key === "dataCleared") {  
+                console.log("Data cleared from another page, updating...");
+                updatePageData();  
+            }
+        });
+
+        function loadIncomeData() {
+            let incomeList = JSON.parse(localStorage.getItem("incomeData")) || [];
+            let totalIncome = parseFloat(localStorage.getItem("totalIncome")) || 0;
+
+            document.getElementById("totalIncome").innerText = totalIncome.toFixed(2);
+            let table = document.getElementById("incomeTable");
+            table.innerHTML = "";
+
+            incomeList.forEach((entry, index) => {
+                let row = document.createElement("tr");
+                row.innerHTML = `<td>${entry.source}</td><td>${entry.category}</td><td>₹${entry.amount.toFixed(2)}</td>
+                                <td><button class='delete-btn' onclick='deleteIncome(${index})'>X</button></td>`;
+                table.appendChild(row);
+            });
+        }
+
+        function addIncome() {
+            let source = document.getElementById('source').value;
+            let amount = parseFloat(document.getElementById('amount').value);
+            let category = document.getElementById('category').value;
+
+            if (source && amount) {
+                let totalIncome = parseFloat(localStorage.getItem('totalIncome')) || 0;
+                totalIncome += amount;
+                localStorage.setItem('totalIncome', totalIncome);
+
+                let incomeList = JSON.parse(localStorage.getItem('incomeData')) || [];
+                incomeList.push({ source, amount, category });
+                localStorage.setItem('incomeData', JSON.stringify(incomeList));
+
+                loadIncomeData();
+                document.getElementById('source').value = '';
+                document.getElementById('amount').value = '';
+            } else {
+                alert('Please enter a valid income source and amount.');
+            }
+        }
+
+        function clearAllData() {
+            localStorage.removeItem("incomeData");
+            localStorage.removeItem("totalIncome");
+            localStorage.setItem("dataCleared", Date.now());  // 🔥 Notify all pages
+            updatePageData();
+            alert("All financial data has been reset!");
+        }
+
+        function updatePageData() {
+            document.getElementById("totalIncome").innerText = "0";
+            document.getElementById("incomeTable").innerHTML = "";
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            window.location.href = "Authentication.html";
+        }
+    </script>
+</body>
+</html>

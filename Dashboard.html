@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: black;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('/Users/yash/Downloads/logo.jpg') no-repeat center center/cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgb(245, 2, 2);
+            color: white;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .summary div {
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 30%;
+            text-align: center;
+        }
+        .income, .expenses, .savings { background: rgb(245, 2, 2); color: white; }
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: red;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background: rgb(168, 3, 3); }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(51, 51, 51, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .navbar a {
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .navbar a:hover { background: rgba(255, 255, 255, 0.2); border-radius: 5px; }
+        .navbar a.active { background: rgba(255, 255, 255, 0.3); border-radius: 5px; }
+        .logout-btn {
+            padding: 12px 20px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .logout-btn:hover { background: darkred; }
+        .logo { height: 40px; margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="/Users/yash/Downloads/logo.jpg" alt="Budget Manager Logo" class="logo">
+        <a href="index.html">Home</a>
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="incometracking.html">Income Tracker</a>
+        <a href="expensetracking.html">Expense Tracker</a>
+        <a href="budgetplanning.html">Budget Planner</a>
+        <a href="report.html">Reports</a>
+        <a class="logout-btn" onclick="logout()">Logout</a>
+    </div>
+    <br><br><br><br>
+    <div class="container">
+        <h2>Finance Dashboard</h2>
+        <button onclick="window.location.href='expensetracking.html'">Go to Expense Tracker</button>
+        <button onclick="window.location.href='incometracking.html'">Go to Income Tracker</button>
+        <div class="inputs">
+            <input type="number" id="incomeInput" placeholder="Enter Income">
+            <input type="number" id="expensesInput" placeholder="Enter Expenses">
+            <button onclick="updateFinance()">Update</button>
+        </div>
+        <div class="summary">
+            <div class="income">Income: ₹<span id="income">0.00</span></div>
+            <div class="expenses">Expenses: ₹<span id="expenses">0.00</span></div>
+            <div class="savings">Savings: ₹<span id="savings">0.00</span></div>
+        </div>
+        <canvas id="financeChart"></canvas>
+        <button onclick="clearAllData()">Clear All Data</button>
+    </div>
+
+    <script>
+        let financeChart;
+
+        function updateFinance() {
+            let storedIncome = parseFloat(localStorage.getItem("totalIncome")) || 0;
+            let storedExpense = parseFloat(localStorage.getItem("totalExpenses")) || 0;
+
+            let newIncome = parseFloat(document.getElementById("incomeInput").value) || 0;
+            let newExpense = parseFloat(document.getElementById("expensesInput").value) || 0;
+
+            storedIncome += newIncome;
+            storedExpense += newExpense;
+
+            localStorage.setItem("totalIncome", storedIncome);
+            localStorage.setItem("totalExpenses", storedExpense);
+
+            loadStoredData();
+        }
+
+        function loadStoredData() {
+            let income = parseFloat(localStorage.getItem("totalIncome")) || 0;
+            let expense = parseFloat(localStorage.getItem("totalExpenses")) || 0;
+            let savings = income - expense; 
+
+            document.getElementById("income").innerText = income.toFixed(2);
+            document.getElementById("expenses").innerText = expense.toFixed(2);
+            document.getElementById("savings").innerText = savings.toFixed(2);
+
+            if (financeChart) {
+                financeChart.data.datasets[0].data = [income, expense, savings];
+                financeChart.update();
+            }
+        }
+
+        function clearAllData() {
+            localStorage.removeItem("totalIncome");
+            localStorage.removeItem("totalExpenses");
+
+            document.getElementById("income").innerText = "0.00";
+            document.getElementById("expenses").innerText = "0.00";
+            document.getElementById("savings").innerText = "0.00";
+
+            financeChart.data.datasets[0].data = [0, 0, 0];
+            financeChart.update();
+
+            alert("All financial data has been reset!");
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            window.location.href = "Authentication.html";
+        }
+
+        window.onload = function () {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            financeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Income', 'Expenses', 'Savings'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['rgb(255, 94, 0)', 'rgb(13, 0, 255)', 'rgb(255, 196, 0)']
+                    }]
+                }
+            });
+
+            loadStoredData();
+        };
+    </script>
+</body>
+</html>

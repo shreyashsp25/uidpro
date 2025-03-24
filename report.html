@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Reports</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: black;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgb(245, 2, 2);
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('/Users/yash/Downloads/logo.jpg') no-repeat center center/cover;
+        }
+        button {
+            background: red;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: rgb(168, 3, 3);
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(51, 51, 51, 0.9);
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .navbar a {
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        .navbar a.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+        .logout-btn {
+            padding: 12px 20px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-left: 20px;
+        }
+        .logout-btn:hover {
+            background: darkred;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="/Users/yash/Downloads/logo.jpg" alt="Budget Manager Logo" class="logo">
+        <a href="index.html">Home</a>
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="incometracking.html">Income Tracker</a>
+        <a href="expensetracking.html">Expense Tracker</a>
+        <a href="budgetplanning.html">Budget Planner</a>
+        <a href="report.html">Reports</a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <br><br><br><br>
+
+    <div class="container">
+        <h2>Financial Reports</h2>
+        <h3>Financial Summary</h3>
+        <p>Income: ₹<span id="reportIncome">0</span></p>
+        <p>Expenses: ₹<span id="reportExpenses">0</span></p>
+        <p>Savings: ₹<span id="reportSavings">0</span></p>
+
+        <button onclick="generatePDF()">Download PDF Report</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+    </div>
+
+    <script>
+        function clearAllData() {
+            localStorage.clear();
+            alert("All financial data has been cleared!");
+            loadReportData(); 
+        }
+
+        function loadReportData() {
+            let storedIncome = parseFloat(localStorage.getItem("totalIncome")) || 0;
+            let expensesList = JSON.parse(localStorage.getItem("expenses")) || [];
+
+            let totalExpenses = expensesList.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+            let savings = storedIncome - totalExpenses;
+
+            document.getElementById("reportIncome").innerText = storedIncome.toFixed(2);
+            document.getElementById("reportExpenses").innerText = totalExpenses.toFixed(2);
+            document.getElementById("reportSavings").innerText = savings.toFixed(2);
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            let income = document.getElementById("reportIncome").innerText;
+            let expenses = document.getElementById("reportExpenses").innerText;
+            let savings = document.getElementById("reportSavings").innerText;
+
+            let incomeList = JSON.parse(localStorage.getItem("incomeData")) || [];
+            let expensesList = JSON.parse(localStorage.getItem("expenses")) || [];
+
+            doc.text("Finance Report", 10, 10);
+            doc.text(`Income: ₹${income}`, 10, 30);
+            doc.text(`Expenses: ₹${expenses}`, 10, 40);
+            doc.text(`Savings: ₹${savings}`, 10, 50);
+
+            let startY = 60;
+            doc.text("Income Details", 10, startY);
+            startY += 10;
+
+            if (incomeList.length > 0) {
+                doc.autoTable({
+                    startY: startY,
+                    head: [["Source", "Category", "Amount (₹)"]],
+                    body: incomeList.map(entry => [entry.source, entry.category, `₹${parseFloat(entry.amount).toFixed(2)}`]),
+                    theme: "grid",
+                });
+                startY = doc.lastAutoTable.finalY + 10;
+            } else {
+                doc.text("No income records available.", 10, startY);
+                startY += 10;
+            }
+
+            doc.text("Expense Details", 10, startY);
+            startY += 10;
+            if (expensesList.length > 0) {
+                doc.autoTable({
+                    startY: startY,
+                    head: [["Description", "Category", "Amount (₹)"]],
+                    body: expensesList.map(expense => [expense.name, "N/A", `₹${parseFloat(expense.amount).toFixed(2)}`]),
+                    theme: "grid",
+                });
+            } else {
+                doc.text("No expense records available.", 10, startY);
+            }
+
+            doc.save("Finance_Report.pdf");
+        }
+
+        function logout() {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = "Authentication.html";
+        }
+
+        window.onload = loadReportData;
+    </script>
+</body>
+</html>
