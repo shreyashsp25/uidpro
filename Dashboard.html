@@ -162,18 +162,28 @@
         }
 
         function clearAllData() {
-            localStorage.removeItem("totalIncome");
-            localStorage.removeItem("totalExpenses");
+    // Remove stored values from local storage
+    localStorage.removeItem("totalIncome");
+    localStorage.removeItem("totalExpenses");
 
-            document.getElementById("income").innerText = "0.00";
-            document.getElementById("expenses").innerText = "0.00";
-            document.getElementById("savings").innerText = "0.00";
+    // Reset displayed values
+    document.getElementById("income").innerText = "0.00";
+    document.getElementById("expenses").innerText = "0.00";
+    document.getElementById("savings").innerText = "0.00";
 
-            financeChart.data.datasets[0].data = [0, 0, 0];
-            financeChart.update();
+    // Reset input fields
+    document.getElementById("incomeInput").value = "";
+    document.getElementById("expensesInput").value = "";
 
-            alert("All financial data has been reset!");
-        }
+    // Reset Chart data properly
+    if (financeChart) {
+        financeChart.data.datasets[0].data = [0, 0, 0];
+        financeChart.update();
+    }
+
+    alert("All financial data has been reset!");
+}
+
 
         function logout() {
             localStorage.removeItem("loggedIn");
